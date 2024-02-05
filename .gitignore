@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+.coverage
+.webassets-cache
+*.sqlite3
+.venv
+.vscode/
