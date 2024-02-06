@@ -4,6 +4,7 @@ from flask import Flask
 
 import open_trs.configs
 import open_trs.db
+import open_trs.auth
 
 CONFIGS = {
     'development': open_trs.configs.DevelopmentConfig,
@@ -46,5 +47,6 @@ def create_app(testing: bool = False):
         return 'Hello, World!'
 
     open_trs.db.init_app(app)
+    app.register_blueprint(open_trs.auth.bp)
 
     return app
