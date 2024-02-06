@@ -5,6 +5,7 @@ __pycache__/
 *.egg
 .coverage
 .webassets-cache
-*.sqlite3
+*.sqlite
 .venv
 .vscode/
+instance/
