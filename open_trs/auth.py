@@ -9,6 +9,29 @@ import open_trs.db
 bp = flask.Blueprint('auth', __name__, url_prefix='/auth')
 
 
+def login_required(view: callable):
+    @functools.wraps(view)
+    def wrapped_view(**kwargs):
+        if flask.g.user is None:
+            return flask.redirect(flask.url_for('auth.login'))
+
+        return view(**kwargs)
+
+    return wrapped_view
+
+
+@bp.before_app_request
+def load_logged_in_user():
+    user_id = flask.session.get('user_id')
+
+    if user_id is None:
+        flask.g.user = None
+    else:
+        db = open_trs.db.get_db()
+
+        flask.g.user = db.execute('SELECT * FROM Users WHERE id = ?', (user_id))
+
+
 @bp.route('/register', methods=('POST', 'GET'))
 def register():
     if flask.request.method == 'GET':
@@ -72,3 +95,9 @@ def login():
     # An error occurred
     flask.flash(error)
     return flask.render_template('auth/login.html')
+
+
+@bp.route('/logout')
+def logout():
+    flask.session.clear()
+    return flask.redirect(flask.url_for('index'))
