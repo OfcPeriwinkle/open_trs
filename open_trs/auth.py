@@ -34,11 +34,10 @@ def register():
                        (username, email, werkzeug.security.generate_password_hash(password)))
             db.commit()
         except db.IntegrityError:
-            error = f'Either user {username} or email {email} is already registered.'
+            error = f'Either user "{username}" or email "{email}" is already registered.'
         else:
             return flask.redirect(flask.url_for('auth.login'))
 
-    if error:
-        flask.flash(error, 'error')
-
+    # An error occured
+    flask.flash(error, 'error')
     return flask.render_template('auth/register.html')
