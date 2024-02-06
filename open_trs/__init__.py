@@ -3,6 +3,7 @@ import os
 from flask import Flask
 
 import open_trs.configs
+import open_trs.db
 
 CONFIGS = {
     'development': open_trs.configs.DevelopmentConfig,
@@ -43,5 +44,7 @@ def create_app(testing: bool = False):
     @app.route('/hello')
     def hello():
         return 'Hello, World!'
+
+    open_trs.db.init_app(app)
 
     return app
