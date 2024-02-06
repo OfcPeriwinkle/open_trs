@@ -1,0 +1,47 @@
+import os
+
+from flask import Flask
+
+import open_trs.configs
+
+CONFIGS = {
+    'development': open_trs.configs.DevelopmentConfig,
+    'testing': open_trs.configs.TestingConfig,
+    'production': open_trs.configs.ProductionConfig
+}
+
+
+def create_app(testing: bool = False):
+    """
+    Create and configure the Flask application.
+
+    Args:
+        testing (bool, optional): Flag indicating whether the application is running in testing
+            mode; defaults to False.
+
+    Returns:
+        The configured Flask application.
+    """
+
+    app = Flask(__name__, instance_relative_config=True)
+
+    # Configure the app
+    if testing:
+        config_name = 'testing'
+    else:
+        config_name = os.getenv('FLASK_ENV', 'development')
+
+    app.config.from_object(CONFIGS[config_name])
+    app.config['DATABASE'] = os.path.join(app.instance_path, 'open_trs.sqlite')
+
+    # Ensure instance folder exists; Flask does not automatically create it
+    try:
+        os.makedirs(app.instance_path)
+    except OSError:
+        pass
+
+    @app.route('/hello')
+    def hello():
+        return 'Hello, World!'
+
+    return app
