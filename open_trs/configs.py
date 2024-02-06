@@ -1,7 +1,6 @@
 class Config:
     DEBUG = False
     TESTING = False
-    DATABASE_URI = 'sqlite:////tmp/trs.db'
 
 
 class ProductionConfig(Config):
@@ -11,8 +10,9 @@ class ProductionConfig(Config):
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    SECRET_KEY = 'dev'
 
 
 class TestingConfig(Config):
     TESTING = True
-    DATABASE_URI = 'sqlite:///:memory:'
+    DATABASE = 'sqlite:///:memory:'
