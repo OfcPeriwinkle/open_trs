@@ -3,7 +3,7 @@ import time
 import werkzeug.security
 
 import jwt
-from flask import Blueprint, current_app, g, redirect, url_for, request, jsonify, flash, render_template, session
+from flask import Blueprint, current_app, g, request, jsonify
 
 import open_trs.db
 
@@ -38,8 +38,9 @@ def load_logged_in_user():
     Load the logged-in user from the JWT token in the request headers.
 
     Returns:
-        If the token is valid and the user exists in the database, the function sets the `g.user` global variable to the user object.
-        If the token is missing or invalid, the function returns a JSON response with an error message and a status code of 400.
+        If the token is valid and the user exists in the database, the function sets the `g.user`
+        global variable to the user object. If the token is missing or invalid, the function
+        returns a JSON response with an error message and a status code of 400.
     """
 
     try:
@@ -62,6 +63,21 @@ def load_logged_in_user():
 
 @bp.route('/register', methods=('POST'))
 def register():
+    """
+    Register a new user.
+
+    This function handles the registration of a new user by extracting the username, email, and
+    password from the request form. It performs validation checks on the input fields and inserts
+    the user's information into the database if the input is valid. If the registration is
+    successful, it returns a JSON response with a success message and status code 201. If there is
+    an error during registration, it returns a JSON response with an error message and status code
+    400.
+
+    Returns:
+        JSON response with success message and status code 201 if registration is successful, JSON
+        response with error message and status code 400 if there is an error during registration
+    """
+
     username = request.form['username']
     email = request.form['email']
     password = request.form['password']
@@ -92,6 +108,16 @@ def register():
 
 @bp.route('/login', methods=('POST'))
 def login():
+    """
+    Authenticates the user by checking the provided username and password.
+
+    If the authentication is successful, a JSON response containing a JWT token is returned.
+    If there is an error, a JSON response containing the error message is returned.
+
+    Returns:
+        JSON response with token or error message
+    """
+
     username = request.form['username']
     password = request.form['password']
 
