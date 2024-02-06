@@ -1,19 +1,31 @@
 import functools
+import time
 import werkzeug.security
 
-import flask
+import jwt
+from flask import Blueprint, current_app, g, redirect, url_for, request, jsonify, flash, render_template, session
 
 import open_trs.db
 
 
-bp = flask.Blueprint('auth', __name__, url_prefix='/auth')
+bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
 def login_required(view: callable):
+    """
+    Decorator that checks if the user is logged in before executing the view function.
+
+    Args:
+        view (callable): The view function to be decorated.
+
+    Returns:
+        callable: The decorated view function.
+    """
+
     @functools.wraps(view)
     def wrapped_view(**kwargs):
-        if flask.g.user is None:
-            return flask.redirect(flask.url_for('auth.login'))
+        if g.user is None:
+            return jsonify({'error': 'User is not logged in'}, 401)
 
         return view(**kwargs)
 
@@ -22,24 +34,37 @@ def login_required(view: callable):
 
 @bp.before_app_request
 def load_logged_in_user():
-    user_id = flask.session.get('user_id')
+    """
+    Load the logged-in user from the JWT token in the request headers.
 
-    if user_id is None:
-        flask.g.user = None
-    else:
-        db = open_trs.db.get_db()
+    Returns:
+        If the token is valid and the user exists in the database, the function sets the `g.user` global variable to the user object.
+        If the token is missing or invalid, the function returns a JSON response with an error message and a status code of 400.
+    """
 
-        flask.g.user = db.execute('SELECT * FROM Users WHERE id = ?', (user_id))
+    try:
+        encoded_jwt = request.headers['Authorization'].split(' ')[1]
+    except KeyError:
+        return jsonify({'error': 'Missing token'}, 400)
+
+    try:
+        decoded_jwt = jwt.decode(encoded_jwt, current_app.config['SECRET_KEY'])
+    except jwt.InvalidSignatureError:
+        return jsonify({'error': 'Token signature verification failed'}, 400)
+    except jwt.ExpiredSignatureError:
+        return jsonify({'error': 'Expired token'}, 400)
+
+    user_id = decoded_jwt['sub']
+
+    db = open_trs.db.get_db()
+    g.user = db.execute('SELECT * FROM Users WHERE id = ?', (user_id))
 
 
-@bp.route('/register', methods=('POST', 'GET'))
+@bp.route('/register', methods=('POST'))
 def register():
-    if flask.request.method == 'GET':
-        return flask.render_template('auth/register.html')
-
-    username = flask.request.form['username']
-    email = flask.request.form['email']
-    password = flask.request.form['password']
+    username = request.form['username']
+    email = request.form['email']
+    password = request.form['password']
 
     error = None
 
@@ -60,20 +85,15 @@ def register():
         except db.IntegrityError:
             error = f'Either user "{username}" or email "{email}" is already registered.'
         else:
-            return flask.redirect(flask.url_for('auth.login'))
+            return jsonify({'message': 'User registered successfully.'}, 201)
 
-    # An error occurred
-    flask.flash(error, 'error')
-    return flask.render_template('auth/register.html')
+    return jsonify({'error': error}, 400)
 
 
-@bp.route('/login', methods=('POST', 'GET'))
+@bp.route('/login', methods=('POST'))
 def login():
-    if flask.request.method == 'GET':
-        return flask.render_template('auth/login.html')
-
-    username = flask.request.form['username']
-    password = flask.request.form['password']
+    username = request.form['username']
+    password = request.form['password']
 
     db = open_trs.db.get_db()
     user = db.execute(
@@ -87,17 +107,13 @@ def login():
         error = 'Incorrect password.'
 
     if error is None:
-        flask.session.clear()
-        flask.session['user_id'] = user['id']
+        issue_time = int(time.time())
+        expiration_time = issue_time + current_app.config['JWT_EXPIRATION']
 
-        return flask.redirect(flask.url_for('index'))
+        claims = {'iat': issue_time, 'exp': expiration_time, 'sub': user['id']}
+        encoded_jwt = jwt.encode(claims, current_app.config['SECRET_KEY'])
+
+        return jsonify({'token': encoded_jwt}, 200)
 
     # An error occurred
-    flask.flash(error)
-    return flask.render_template('auth/login.html')
-
-
-@bp.route('/logout')
-def logout():
-    flask.session.clear()
-    return flask.redirect(flask.url_for('index'))
+    return jsonify({'error': error}, 400)
