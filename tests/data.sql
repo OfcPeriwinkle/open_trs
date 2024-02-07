@@ -3,8 +3,8 @@ INSERT INTO
 VALUES
     (
         'test',
-        'test@firsttest.com',
-        'scrypt:32768:8:1$KohBHT8qAHj9TZbG$dbeaf604b2d9748ce8a6d19dc9ab10762238f218e2bfd28cde45c741d3df380ce016751d2bca626c05158929285971dfeda04ca863c5cc64a12b5d1b4dd20fe6',
+        'test@test.com',
+        'scrypt:32768:8:1$5JFUp7hZJNWjYdRs$fd0b40414edf428a2f04ed418c7e0913768fcba509f6f0f77d6623419726eedffa783bd10516e6376ac4484eee6b2ea67d1f1a2608cef11f1df353893f495385',
         '2024-02-06 21:18:19'
     ),
     (
