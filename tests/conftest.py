@@ -52,7 +52,7 @@ def app() -> Flask:
     """
     Creates and initializes the Flask app for testing purposes.
 
-    Returns:
+    Yields:
         Flask: The Flask app object.
     """
 
@@ -64,7 +64,7 @@ def app() -> Flask:
         db = open_trs.db.get_db()
         db.executescript(_data_sql)
 
-    return app
+        yield app
 
 
 @pytest.fixture
