@@ -33,8 +33,8 @@ def create_app(testing: bool = False):
     else:
         config_name = os.getenv('FLASK_ENV', 'development')
 
-    app.config.from_object(CONFIGS[config_name])
     app.config['DATABASE'] = os.path.join(app.instance_path, 'open_trs.sqlite')
+    app.config.from_object(CONFIGS[config_name])
 
     # Ensure instance folder exists; Flask does not automatically create it
     try:
