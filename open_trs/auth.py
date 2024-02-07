@@ -46,14 +46,14 @@ def login_required(view: callable):
         user_id = decoded_jwt['sub']
 
         db = open_trs.db.get_db()
-        user = db.execute('SELECT * FROM Users WHERE id = ?', (user_id,))
+        user = db.execute('SELECT * FROM Users WHERE id = ?', (user_id,)).fetchone()
 
         return view(user, *args, **kwargs)
 
     return wrapped_view
 
 
-@bp.route('/register', methods=('POST'))
+@bp.route('/register', methods=['POST'])
 def register():
     """
     Register a new user.
@@ -99,7 +99,7 @@ def register():
     return jsonify({'error': error}, 400)
 
 
-@bp.route('/login', methods=('POST'))
+@bp.route('/login', methods=['POST'])
 def login():
     """
     Authenticates the user by checking the provided username and password.
