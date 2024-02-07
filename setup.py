@@ -6,10 +6,6 @@ setup(
     packages=find_packages(),
     install_requires=[
         'flask',
-    ],
-    entry_points={
-        'console_scripts': [
-            # 'open_trs=open_trs.server:main',
-        ],
-    },
+        'pyjwt'
+    ]
 )
