@@ -1,18 +1,24 @@
 class Config:
     DEBUG = False
     TESTING = False
-    DATABASE_URI = 'sqlite:////tmp/trs.db'
+    JWT_EXPIRATION = 3600
 
 
 class ProductionConfig(Config):
-    # TOOD: Look at common production configurations
+    # TODO: Look at common production configurations
     pass
 
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    SECRET_KEY = 'secret'
 
 
 class TestingConfig(Config):
     TESTING = True
-    DATABASE_URI = 'sqlite:///:memory:'
+    DATABASE = 'file::memory:?cache=shared'
+    SECRET_KEY = 'secret'
+
+
+class GitHubActionsConfig(TestingConfig):
+    DATABASE = 'sqlite:///open_trs.db'
