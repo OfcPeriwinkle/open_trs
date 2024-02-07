@@ -1,4 +1,5 @@
 import functools
+import re
 import time
 import werkzeug.security
 
@@ -7,6 +8,7 @@ from flask import Blueprint, current_app, request, jsonify
 
 import open_trs.db
 
+EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -81,6 +83,8 @@ def register():
         error = 'Username is required'
     elif email is None or len(email) == 0:
         error = 'Email is required'
+    elif not EMAIL_REGEX.match(email):
+        error = 'Invalid email'
     elif password is None or len(password) == 0:
         error = 'Password is required'
 

@@ -35,6 +35,7 @@ def test_register_new_user(client: FlaskClient, app: Flask):
 @pytest.mark.parametrize(('username', 'email', 'password', 'message'), (
     ('', '', '', b'Username is required'),
     ('test', '', '', b'Email is required'),
+    ('test', 'invalid_email', '', b'Invalid email'),
     ('test', 'test@test.com', '', b'Password is required'),
     ('test', 'test@test.com', 'test',
      b'Either user \\"test\\" or email \\"test@test.com\\" is already registered.')
