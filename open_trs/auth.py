@@ -77,11 +77,11 @@ def register():
 
     error = None
 
-    if username is None:
+    if username is None or len(username) == 0:
         error = 'Username is required'
-    elif email is None:
+    elif email is None or len(email) == 0:
         error = 'Email is required'
-    elif password is None:
+    elif password is None or len(password) == 0:
         error = 'Password is required'
 
     if error is None:
