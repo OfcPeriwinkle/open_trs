@@ -1,10 +1,11 @@
 class Config:
     DEBUG = False
     TESTING = False
+    JWT_EXPIRATION = 3600
 
 
 class ProductionConfig(Config):
-    # TOOD: Look at common production configurations
+    # TODO: Look at common production configurations
     pass
 
 
