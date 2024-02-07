@@ -70,17 +70,18 @@ def register():
         response with error message and status code 400 if there is an error during registration
     """
 
-    username = request.form['username']
-    email = request.form['email']
-    password = request.form['password']
+    data = request.get_json()
+    username = data.get('username')
+    email = data.get('email')
+    password = data.get('password')
 
     error = None
 
-    if not username:
+    if username is None:
         error = 'Username is required'
-    elif not email:
+    elif email is None:
         error = 'Email is required'
-    elif not password:
+    elif password is None:
         error = 'Password is required'
 
     if error is None:
@@ -110,8 +111,9 @@ def login():
         JSON response with token or error message
     """
 
-    username = request.form['username']
-    password = request.form['password']
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
 
     db = open_trs.db.get_db()
     user = db.execute(
@@ -119,7 +121,7 @@ def login():
 
     error = None
 
-    if not user:
+    if user is None:
         error = 'Incorrect username.'
     elif not werkzeug.security.check_password_hash(user['password'], password):
         error = 'Incorrect password.'
