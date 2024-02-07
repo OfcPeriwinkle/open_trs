@@ -1,0 +1,19 @@
+[project]
+name = "open-trs"
+version = "1.0.0"
+description = "Time reporting system for hobbies, projects, and life."
+dependencies = [
+    "flask",
+    "pyjwt",
+]
+
+[build-system]
+requires = ["flit_core<4"]
+build-backend = "flit_core.buildapi"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["open_trs"]
