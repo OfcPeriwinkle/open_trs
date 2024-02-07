@@ -9,7 +9,8 @@ import open_trs.auth
 CONFIGS = {
     'development': open_trs.configs.DevelopmentConfig,
     'testing': open_trs.configs.TestingConfig,
-    'production': open_trs.configs.ProductionConfig
+    'production': open_trs.configs.ProductionConfig,
+    'ci': open_trs.configs.GitHubActionsConfig
 }
 
 

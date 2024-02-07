@@ -11,9 +11,14 @@ class ProductionConfig(Config):
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    SECRET_KEY = 'dev'
+    SECRET_KEY = 'secret'
 
 
 class TestingConfig(Config):
     TESTING = True
-    DATABASE = 'sqlite:///:memory:'
+    DATABASE = 'file::memory:?cache=shared'
+    SECRET_KEY = 'secret'
+
+
+class GitHubActionsConfig(TestingConfig):
+    DATABASE = 'sqlite:///open_trs.db'
