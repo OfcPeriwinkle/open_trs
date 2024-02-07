@@ -1,3 +1,5 @@
+from flask.testing import FlaskClient
+
 import open_trs
 import open_trs.configs
 
@@ -11,6 +13,6 @@ def test_config():
     assert testing_app.config['DATABASE'] == open_trs.configs.TestingConfig.DATABASE
 
 
-def test_hello(client):
+def test_hello(client: FlaskClient):
     response = client.get('/hello')
     assert response.data == b'Hello, World!'

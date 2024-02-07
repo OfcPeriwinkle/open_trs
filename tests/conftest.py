@@ -19,6 +19,7 @@ def app() -> Flask:
     Returns:
         Flask: The Flask app object.
     """
+
     app = open_trs.create_app(testing=True)
 
     with app.app_context():
@@ -27,7 +28,7 @@ def app() -> Flask:
         db = open_trs.db.get_db()
         db.executescript(_data_sql)
 
-    yield app
+    return app
 
 
 @pytest.fixture
