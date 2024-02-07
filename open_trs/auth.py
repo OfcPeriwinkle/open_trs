@@ -39,7 +39,10 @@ def login_required(view: callable):
             return jsonify({'error': 'Missing token'}), 400
 
         try:
-            decoded_jwt = jwt.decode(encoded_jwt, current_app.config['SECRET_KEY'])
+            decoded_jwt = jwt.decode(
+                encoded_jwt,
+                current_app.config['SECRET_KEY'],
+                algorithms=['HS256'])
         except jwt.InvalidSignatureError:
             return jsonify({'error': 'Token signature verification failed'}), 400
         except jwt.ExpiredSignatureError:
@@ -126,9 +129,9 @@ def login():
     error = None
 
     if user is None:
-        error = 'Incorrect username.'
+        error = 'Incorrect username'
     elif not werkzeug.security.check_password_hash(user['password'], password):
-        error = 'Incorrect password.'
+        error = 'Incorrect password'
 
     if error is None:
         issue_time = int(time.time())

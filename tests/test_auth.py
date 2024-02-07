@@ -1,3 +1,4 @@
+import jwt
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
@@ -45,6 +46,40 @@ def test_register_validate_input(client: FlaskClient, username, email, password,
         '/auth/register',
         headers={'Content-Type': 'application/json'},
         json={'username': username, 'email': email, 'password': password})
+
+    assert response.status_code == 400
+    assert message in response.data
+
+
+def test_login(client: FlaskClient, app: Flask):
+    response = client.post(
+        '/auth/login',
+        headers={'Content-Type': 'application/json'},
+        json={'username': 'test', 'password': 'test'})
+
+    assert response.status_code == 200
+
+    token = response.get_json().get('token')
+    assert token is not None
+
+    with app.app_context():
+        decoded_jwt = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+
+        db = open_trs.db.get_db()
+        user_id = db.execute('SELECT id FROM Users WHERE username = ?', ('test',)).fetchone()['id']
+
+        assert decoded_jwt['sub'] == user_id
+
+
+@pytest.mark.parametrize(('username', 'password', 'message'), (
+    ('', '', b'Incorrect username'),
+    ('test', '', b'Incorrect password'),
+))
+def test_login_validate_input(client: FlaskClient, username, password, message):
+    response = client.post(
+        '/auth/login',
+        headers={'Content-Type': 'application/json'},
+        json={'username': username, 'password': password})
 
     assert response.status_code == 400
     assert message in response.data
