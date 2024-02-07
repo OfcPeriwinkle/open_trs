@@ -3,7 +3,7 @@ import time
 import werkzeug.security
 
 import jwt
-from flask import Blueprint, current_app, g, request, jsonify
+from flask import Blueprint, current_app, request, jsonify
 
 import open_trs.db
 
@@ -34,14 +34,14 @@ def login_required(view: callable):
         try:
             encoded_jwt = request.headers['Authorization'].split(' ')[1]
         except KeyError:
-            return jsonify({'error': 'Missing token'}, 400)
+            return jsonify({'error': 'Missing token'}), 400
 
         try:
             decoded_jwt = jwt.decode(encoded_jwt, current_app.config['SECRET_KEY'])
         except jwt.InvalidSignatureError:
-            return jsonify({'error': 'Token signature verification failed'}, 400)
+            return jsonify({'error': 'Token signature verification failed'}), 400
         except jwt.ExpiredSignatureError:
-            return jsonify({'error': 'Expired token'}, 400)
+            return jsonify({'error': 'Expired token'}), 400
 
         user_id = decoded_jwt['sub']
 
@@ -94,9 +94,9 @@ def register():
         except db.IntegrityError:
             error = f'Either user "{username}" or email "{email}" is already registered.'
         else:
-            return jsonify({'message': 'User registered successfully.'}, 201)
+            return jsonify({'message': 'User registered successfully.'}), 201
 
-    return jsonify({'error': error}, 400)
+    return jsonify({'error': error}), 400
 
 
 @bp.route('/login', methods=['POST'])
@@ -133,7 +133,7 @@ def login():
         claims = {'iat': issue_time, 'exp': expiration_time, 'sub': user['id']}
         encoded_jwt = jwt.encode(claims, current_app.config['SECRET_KEY'])
 
-        return jsonify({'token': encoded_jwt}, 200)
+        return jsonify({'token': encoded_jwt}), 200
 
     # An error occurred
-    return jsonify({'error': error}, 400)
+    return jsonify({'error': error}), 400
