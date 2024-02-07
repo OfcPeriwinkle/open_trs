@@ -11,6 +11,42 @@ with open(os.path.join(os.path.dirname(__file__), 'data.sql'), 'rb') as f:
     _data_sql = f.read().decode('utf8')
 
 
+class AuthActions:
+    """
+    Helper class for performing authentication actions.
+    """
+
+    def __init__(self, client: FlaskClient):
+        """
+        Instantiate helper class for performing authentication actions.
+
+        Args:
+            client (FlaskClient): The Flask client object.
+        """
+
+        self._client = client
+
+    def login(self, username: str = 'test', email: str = 'test@test.com', password: str = 'test'):
+        """
+        Performs a login action.
+
+        Args:
+            username: The username to use for login. Defaults to 'test'.
+            email: The email to use for login. Defaults to 'test@test.com'.
+            password: The password to use for login. Defaults to 'test'.
+
+        Returns:
+            Response: The response object from the login request.
+        """
+
+        return self._client.post(
+            '/auth/login',
+            data={
+                'username': username,
+                'email': email,
+                'password': password})
+
+
 @pytest.fixture
 def app() -> Flask:
     """
@@ -62,3 +98,8 @@ def runner(app: Flask) -> FlaskCliRunner:
     """
 
     return app.test_cli_runner()
+
+
+@pytest.fixture
+def auth(client: FlaskClient) -> AuthActions:
+    return AuthActions(client)
