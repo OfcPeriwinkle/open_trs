@@ -13,7 +13,14 @@ bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 def login_required(view: callable):
     """
-    Decorator that checks if the user is logged in before executing the view function.
+    Decorator that checks if the user is logged in before executing the view function by checking
+    the validity of a JWT.
+
+    If the provided JWT is invalid or expired, it returns a JSON response with an error message
+    and status code 400.
+
+    Decorated functions will receive an additional argument, a dictionary containing the user
+    information as specified in the Users table.
 
     Args:
         view (callable): The view function to be decorated.
@@ -23,42 +30,27 @@ def login_required(view: callable):
     """
 
     @functools.wraps(view)
-    def wrapped_view(**kwargs):
-        if g.user is None:
-            return jsonify({'error': 'User is not logged in'}, 401)
+    def wrapped_view(*args, **kwargs):
+        try:
+            encoded_jwt = request.headers['Authorization'].split(' ')[1]
+        except KeyError:
+            return jsonify({'error': 'Missing token'}, 400)
 
-        return view(**kwargs)
+        try:
+            decoded_jwt = jwt.decode(encoded_jwt, current_app.config['SECRET_KEY'])
+        except jwt.InvalidSignatureError:
+            return jsonify({'error': 'Token signature verification failed'}, 400)
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'Expired token'}, 400)
+
+        user_id = decoded_jwt['sub']
+
+        db = open_trs.db.get_db()
+        user = db.execute('SELECT * FROM Users WHERE id = ?', (user_id,))
+
+        return view(user, *args, **kwargs)
 
     return wrapped_view
-
-
-@bp.before_app_request
-def load_logged_in_user():
-    """
-    Load the logged-in user from the JWT token in the request headers.
-
-    Returns:
-        If the token is valid and the user exists in the database, the function sets the `g.user`
-        global variable to the user object. If the token is missing or invalid, the function
-        returns a JSON response with an error message and a status code of 400.
-    """
-
-    try:
-        encoded_jwt = request.headers['Authorization'].split(' ')[1]
-    except KeyError:
-        return jsonify({'error': 'Missing token'}, 400)
-
-    try:
-        decoded_jwt = jwt.decode(encoded_jwt, current_app.config['SECRET_KEY'])
-    except jwt.InvalidSignatureError:
-        return jsonify({'error': 'Token signature verification failed'}, 400)
-    except jwt.ExpiredSignatureError:
-        return jsonify({'error': 'Expired token'}, 400)
-
-    user_id = decoded_jwt['sub']
-
-    db = open_trs.db.get_db()
-    g.user = db.execute('SELECT * FROM Users WHERE id = ?', (user_id))
 
 
 @bp.route('/register', methods=('POST'))
