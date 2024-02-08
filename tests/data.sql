@@ -13,3 +13,21 @@ VALUES
         'scrypt:32768:8:1$SjMyoQ8KyiWU5Tmf$587f80846bd9f3aa05b4f227ee6be7e4d3f59f0f0e019bb68ac42cde132821c1ebf7fd2320966b3c55e1fe04a096fb6eda672b17652c96212939d94765d05b29',
         '2024-02-06 21:22:03'
     );
+
+INSERT INTO
+    Projects (owner, name, category, description, created)
+VALUES
+    (
+        1,
+        'Existing Project',
+        0,
+        'This is an existing test project.',
+        '2024-02-06 21:18:19'
+    ),
+    (
+        2,
+        'Another Test Project',
+        0,
+        'This is another test project.',
+        '2024-02-06 21:22:03'
+    );
