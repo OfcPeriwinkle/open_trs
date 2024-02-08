@@ -9,3 +9,4 @@ __pycache__/
 .venv
 .vscode/
 instance/
+.pytest_cache/
