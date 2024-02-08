@@ -36,15 +36,17 @@ class AuthActions:
             password: The password to use for login. Defaults to 'test'.
 
         Returns:
-            Response: The response object from the login request.
+            The JWT token received from the server or None if authentication was unsuccessful.
         """
 
-        return self._client.post(
+        response = self._client.post(
             '/auth/login',
-            data={
-                'username': username,
-                'email': email,
-                'password': password})
+            headers={'Content-Type': 'application/json'},
+            json={'username': username,
+                  'email': email,
+                  'password': password})
+
+        return response.get_json().get('token')
 
 
 @pytest.fixture
