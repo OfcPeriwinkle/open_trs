@@ -2,9 +2,10 @@ import os
 
 from flask import Flask
 
+import open_trs.auth
 import open_trs.configs
 import open_trs.db
-import open_trs.auth
+import open_trs.projects
 
 CONFIGS = {
     'development': open_trs.configs.DevelopmentConfig,
@@ -49,5 +50,6 @@ def create_app(testing: bool = False):
 
     open_trs.db.init_app(app)
     app.register_blueprint(open_trs.auth.bp)
+    app.register_blueprint(open_trs.projects.bp)
 
     return app
