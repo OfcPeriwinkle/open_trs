@@ -4,8 +4,9 @@ import time
 import werkzeug.security
 
 import jwt
-from flask import Blueprint, current_app, request, jsonify
+from flask import abort, Blueprint, current_app, request, jsonify
 
+import open_trs
 import open_trs.db
 
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
@@ -76,30 +77,26 @@ def register():
     email = data.get('email')
     password = data.get('password')
 
-    error = None
-
     if username is None or len(username) == 0:
-        error = 'Username is required'
+        raise open_trs.InvalidUsage('Username is required', 400)
     elif email is None or len(email) == 0:
-        error = 'Email is required'
+        raise open_trs.InvalidUsage('Email is required', 400)
     elif not EMAIL_REGEX.match(email):
-        error = 'Invalid email'
+        raise open_trs.InvalidUsage('Invalid email', 400)
     elif password is None or len(password) == 0:
-        error = 'Password is required'
+        raise open_trs.InvalidUsage('Password is required', 400)
 
-    if error is None:
-        db = open_trs.db.get_db()
+    db = open_trs.db.get_db()
 
-        try:
-            db.execute('INSERT INTO Users (username, email, password) VALUES (?, ?, ?)',
-                       (username, email, werkzeug.security.generate_password_hash(password)))
-            db.commit()
-        except db.IntegrityError:
-            error = f'Either user "{username}" or email "{email}" is already registered.'
-        else:
-            return jsonify({'message': 'User registered successfully.'}), 201
+    try:
+        db.execute('INSERT INTO Users (username, email, password) VALUES (?, ?, ?)',
+                   (username, email, werkzeug.security.generate_password_hash(password)))
+        db.commit()
+    except db.IntegrityError:
+        raise open_trs.InvalidUsage(
+            f'Either user "{username}" or email "{email}" is already registered.', 400)
 
-    return jsonify({'error': error}), 400
+    return jsonify({'message': 'User registered successfully.'}), 201
 
 
 @bp.route('/login', methods=['POST'])
@@ -122,21 +119,15 @@ def login():
     user = db.execute(
         'SELECT id, password FROM Users WHERE username = ?', (username,)).fetchone()
 
-    error = None
-
     if user is None:
-        error = 'Incorrect username'
+        raise open_trs.InvalidUsage('Incorrect username', 400)
     elif not werkzeug.security.check_password_hash(user['password'], password):
-        error = 'Incorrect password'
+        raise open_trs.InvalidUsage('Incorrect password', 400)
 
-    if error is None:
-        issue_time = int(time.time())
-        expiration_time = issue_time + current_app.config['JWT_EXPIRATION']
+    issue_time = int(time.time())
+    expiration_time = issue_time + current_app.config['JWT_EXPIRATION']
 
-        claims = {'iat': issue_time, 'exp': expiration_time, 'sub': user['id']}
-        encoded_jwt = jwt.encode(claims, current_app.config['SECRET_KEY'])
+    claims = {'iat': issue_time, 'exp': expiration_time, 'sub': user['id']}
+    encoded_jwt = jwt.encode(claims, current_app.config['SECRET_KEY'])
 
-        return jsonify({'token': encoded_jwt}), 200
-
-    # An error occurred
-    return jsonify({'error': error}), 400
+    return jsonify({'token': encoded_jwt}), 200
