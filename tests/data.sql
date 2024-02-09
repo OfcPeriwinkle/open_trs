@@ -25,9 +25,16 @@ VALUES
         '2024-02-06 21:18:19'
     ),
     (
+        1,
+        'The Other Existing Project',
+        0,
+        'This is another existing test project.',
+        '2024-02-06 21:18:19'
+    ),
+    (
         2,
         'Another Test Project',
         0,
-        'This is another test project.',
+        'This is a project from another user.',
         '2024-02-06 21:22:03'
     );
