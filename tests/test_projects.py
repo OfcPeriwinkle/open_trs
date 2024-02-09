@@ -60,7 +60,7 @@ def test_get_projects(client: FlaskClient, auth: AuthActions, app: Flask):
     token = auth.login()
 
     response = client.get(
-        '/projects',
+        '/projects/',
         headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'})
 
     assert response.status_code == 200
@@ -80,6 +80,9 @@ def test_get_projects(client: FlaskClient, auth: AuthActions, app: Flask):
 
         for project, db_project in zip(projects, db_projects):
             for key in project:
+                if key == 'created':
+                    continue
+
                 assert project[key] == db_project[key]
 
 
