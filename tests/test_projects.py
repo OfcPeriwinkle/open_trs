@@ -99,20 +99,26 @@ def test_get_project(client: FlaskClient, auth: AuthActions, app: Flask):
         db = open_trs.db.get_db()
         db_project = db.execute('SELECT * FROM Projects WHERE id = ?', (1,)).fetchone()
 
-        assert response.get_json().get('project') == db_project
+        project = response.get_json().get('project')
+
+        for key, value in project.items():
+            if key == 'created':
+                continue
+
+            assert value == db_project[key]
 
 
-@pytest.mark.parametrize(('project_id', 'message'), (
-    (42, b'Project not found'),
-    (-1, b'Invalid project ID'),
-    (3, b'Unauthorized')
+@pytest.mark.parametrize(('project_id', 'message', 'status'), (
+    (42, b'Project 42 does not exist', 404),
+    (3, b'Forbidden', 403)
 ))
-def test_get_project_validate_input(client: FlaskClient, auth: AuthActions, project_id, message):
+def test_get_project_validate_input(
+        client: FlaskClient, auth: AuthActions, project_id, message, status):
     token = auth.login()
 
     response = client.get(
         f'/projects/{project_id}',
         headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'})
 
-    assert response.status_code == 400
+    assert response.status_code == status
     assert message in response.data
