@@ -21,8 +21,7 @@ def login_required(view: callable):
     If the provided JWT is invalid or expired, it returns a JSON response with an error message
     and status code 400.
 
-    Decorated functions will receive an additional argument, a dictionary containing the user
-    information as specified in the Users table.
+    Decorated functions will receive the user's ID integer as an additional argument
 
     Args:
         view (callable): The view function to be decorated.
@@ -50,10 +49,7 @@ def login_required(view: callable):
 
         user_id = decoded_jwt['sub']
 
-        db = open_trs.db.get_db()
-        user = db.execute('SELECT * FROM Users WHERE id = ?', (user_id,)).fetchone()
-
-        return view(user, *args, **kwargs)
+        return view(user_id, *args, **kwargs)
 
     return wrapped_view
 
