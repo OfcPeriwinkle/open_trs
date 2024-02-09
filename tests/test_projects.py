@@ -60,7 +60,7 @@ def test_get_projects(client: FlaskClient, auth: AuthActions, app: Flask):
     token = auth.login()
 
     response = client.get(
-        '/projects/get',
+        '/projects',
         headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'})
 
     assert response.status_code == 200
@@ -71,7 +71,10 @@ def test_get_projects(client: FlaskClient, auth: AuthActions, app: Flask):
 
     with app.app_context():
         db = open_trs.db.get_db()
-        db_projects = db.execute('SELECT * FROM Projects WHERE owner = ?', (1,)).fetchall()
+        db_projects = db.execute(
+            'SELECT * FROM Projects'
+            ' WHERE owner = ?'
+            ' ORDER BY id', (1,)).fetchall()
 
         assert len(projects) == len(db_projects)
 
@@ -84,7 +87,7 @@ def test_get_project(client: FlaskClient, auth: AuthActions, app: Flask):
     token = auth.login()
 
     response = client.get(
-        '/projects/get/1',
+        '/projects/1',
         headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'})
 
     assert response.status_code == 200
@@ -105,7 +108,7 @@ def test_get_project_validate_input(client: FlaskClient, auth: AuthActions, proj
     token = auth.login()
 
     response = client.get(
-        f'/projects/get/{project_id}',
+        f'/projects/{project_id}',
         headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'})
 
     assert response.status_code == 400
