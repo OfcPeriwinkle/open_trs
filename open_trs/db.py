@@ -6,7 +6,9 @@ from flask import Flask, g, current_app
 
 def get_db() -> sqlite3.Connection:
     """
-    Get the SQLite database connection.
+    Get the SQLite database connection for the `current_app`.
+
+    NOTE: This utilizes `flask.current_app` to identify the config's `DATABASE`.
 
     Returns:
         sqlite3.Connection: The SQLite database connection.
