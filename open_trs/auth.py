@@ -77,13 +77,13 @@ def register():
     email = data.get('email')
     password = data.get('password')
 
-    if username is None or len(username) == 0:
+    if not username:
         raise open_trs.InvalidUsage('Username is required', 400)
-    elif email is None or len(email) == 0:
+    elif not email:
         raise open_trs.InvalidUsage('Email is required', 400)
     elif not EMAIL_REGEX.match(email):
         raise open_trs.InvalidUsage('Invalid email', 400)
-    elif password is None or len(password) == 0:
+    elif not password:
         raise open_trs.InvalidUsage('Password is required', 400)
 
     db = open_trs.db.get_db()
