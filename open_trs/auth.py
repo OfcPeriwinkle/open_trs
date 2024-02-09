@@ -36,7 +36,7 @@ def login_required(view: callable):
         try:
             encoded_jwt = request.headers['Authorization'].split(' ')[1]
         except KeyError:
-            return jsonify({'error': 'Missing token'}), 400
+            raise open_trs.InvalidUsage('Missing token', 400)
 
         try:
             decoded_jwt = jwt.decode(
@@ -44,9 +44,9 @@ def login_required(view: callable):
                 current_app.config['SECRET_KEY'],
                 algorithms=['HS256'])
         except jwt.InvalidSignatureError:
-            return jsonify({'error': 'Token signature verification failed'}), 400
+            raise open_trs.InvalidUsage('Token signature verification failed', 400)
         except jwt.ExpiredSignatureError:
-            return jsonify({'error': 'Expired token'}), 400
+            raise open_trs.InvalidUsage('Expired token', 400)
 
         user_id = decoded_jwt['sub']
 
