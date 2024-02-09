@@ -54,3 +54,59 @@ def test_create_project_validate_input(
 
     assert response.status_code == 400
     assert message in response.data
+
+
+def test_get_projects(client: FlaskClient, auth: AuthActions, app: Flask):
+    token = auth.login()
+
+    response = client.get(
+        '/projects/get',
+        headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'})
+
+    assert response.status_code == 200
+
+    projects = response.get_json().get('projects')
+    assert projects is not None
+    assert len(projects) == 2
+
+    with app.app_context():
+        db = open_trs.db.get_db()
+        db_projects = db.execute('SELECT * FROM Projects WHERE owner = ?', (1,)).fetchall()
+
+        assert len(projects) == len(db_projects)
+
+        for project, db_project in zip(projects, db_projects):
+            for key in project:
+                assert project[key] == db_project[key]
+
+
+def test_get_project(client: FlaskClient, auth: AuthActions, app: Flask):
+    token = auth.login()
+
+    response = client.get(
+        '/projects/get/1',
+        headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'})
+
+    assert response.status_code == 200
+
+    with app.app_context():
+        db = open_trs.db.get_db()
+        db_project = db.execute('SELECT * FROM Projects WHERE id = ?', (1,)).fetchone()
+
+        assert response.get_json().get('project') == db_project
+
+
+@pytest.mark.parametrize(('project_id', 'message'), (
+    (42, b'Project not found'),
+    (-1, b'Invalid project ID'),
+    (3, b'Unauthorized')
+))
+def test_get_project_validate_input(client: FlaskClient, auth: AuthActions, project_id, message):
+    token = auth.login()
+
+    response = client.get(
+        f'/projects/get/{project_id}',
+        headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'})
+
+    assert response.status_code == 400
+    assert message in response.data
