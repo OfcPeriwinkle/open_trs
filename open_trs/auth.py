@@ -47,6 +47,8 @@ def login_required(view: callable):
             raise open_trs.InvalidUsage('Token signature verification failed', 400)
         except jwt.ExpiredSignatureError:
             raise open_trs.InvalidUsage('Expired token', 400)
+        except jwt.DecodeError:
+            raise open_trs.InvalidUsage('Unable to decode token', 400)
 
         user_id = decoded_jwt['sub']
 
