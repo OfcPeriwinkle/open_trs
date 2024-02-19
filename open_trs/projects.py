@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify, request
 import open_trs.db
 import open_trs.auth
 
+_UPDATABLE_FIELDS = ['name', 'description', 'category']
 
 bp = Blueprint('projects', __name__, url_prefix='/projects')
 
@@ -69,3 +70,40 @@ def create_project(user_id: int):
     db.commit()
 
     return jsonify({'message': 'Project created successfully'}), 201
+
+
+@bp.route('/<int:project_id>/update', methods=['PUT'])
+@open_trs.auth.login_required
+def update_project(user_id: int, project_id: int):
+    request_json = request.get_json()
+
+    db = open_trs.db.get_db()
+    project = db.execute('SELECT * FROM Projects WHERE id = ?',
+                         (project_id,)).fetchone()
+
+    if project is None:
+        raise open_trs.InvalidUsage(f'Project {project_id} does not exist', 404)
+
+    if project['owner'] != user_id:
+        raise open_trs.InvalidUsage('Forbidden', 403)
+
+    updated = False
+    project = dict(project)
+
+    for field in _UPDATABLE_FIELDS:
+        if field in request_json and request_json[field]:
+            project[field] = request_json[field]
+            updated = True
+
+    if not updated:
+        raise open_trs.InvalidUsage('Nothing to update', 400)
+
+    update_query = f'UPDATE Projects SET {" = ?, ".join(_UPDATABLE_FIELDS)} = ? WHERE owner = ? AND id = ?'
+    update_values = [project[field] for field in _UPDATABLE_FIELDS]
+    update_values.extend([user_id, project_id])
+
+    db.execute(update_query, update_values)
+    db.commit()
+
+    return jsonify({'message': f'Project {project_id} updated successfully',
+                   'project': project})
