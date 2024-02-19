@@ -1,3 +1,4 @@
+from wsgiref import headers
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
@@ -25,6 +26,7 @@ def test_create_project(client: FlaskClient, auth: AuthActions, app: Flask):
     assert success_message is not None
     assert 'created successfully' in success_message
 
+    # TODO: have the API return the created project
     with app.app_context():
         db = open_trs.db.get_db()
         projects = db.execute(
@@ -117,6 +119,95 @@ def test_get_project_validate_input(
 
     response = client.get(
         f'/projects/{project_id}',
+        headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'})
+
+    assert response.status_code == status
+    assert message in response.data
+
+
+def test_update_project(client: FlaskClient, auth: AuthActions, app: Flask):
+    token = auth.login()
+
+    response = client.put(
+        '/projects/1/update',
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {token}'},
+        json={
+            'name': 'Updated Project',
+            'description': 'This is an updated project!',
+            'category': 2})
+
+    assert response.status_code == 200
+
+    success_message = response.get_json().get('message')
+    assert success_message is not None
+    assert 'updated successfully' in success_message
+
+    updated_project = response.get_json().get('project')
+
+    with app.app_context():
+        db = open_trs.db.get_db()
+        db_project = db.execute('SELECT * FROM Projects WHERE id = ?', (1,)).fetchone()
+
+        for key, value in updated_project.items():
+            if key == 'created':
+                continue
+
+            assert value == db_project[key]
+
+
+@pytest.mark.parametrize(('project_id', 'name', 'description', 'message', 'status'), (
+    (42, 'Updated Project', 'This is an updated project!',
+     b'Project 42 does not exist', 404),
+    (3, 'Updated Project', 'This is an updated project!', b'Forbidden', 403),
+    (1, '', '', b'Nothing to update', 400),
+))
+def test_update_project_validate_input(
+        client: FlaskClient, auth: AuthActions, project_id, name, description, message, status):
+    token = auth.login()
+
+    response = client.put(
+        f'/projects/{project_id}/update',
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {token}'},
+        json={'name': name, 'description': description})
+
+    assert response.status_code == status
+    assert message in response.data
+
+
+def test_delete_project(client: FlaskClient, auth: AuthActions, app: Flask):
+    token = auth.login()
+
+    response = client.delete(
+        '/projects/1/delete',
+        headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'})
+
+    assert response.status_code == 200
+
+    success_message = response.get_json().get('message')
+    assert success_message is not None
+    assert 'deleted successfully' in success_message
+
+    with app.app_context():
+        db = open_trs.db.get_db()
+        project = db.execute('SELECT * FROM Projects WHERE id = ?', (1,)).fetchone()
+
+        assert project is None
+
+
+@pytest.mark.parametrize(('project_id', 'message', 'status'), (
+    (42, b'Project 42 does not exist', 404),
+    (3, b'Forbidden', 403)
+))
+def test_delete_project_validate_input(
+        client: FlaskClient, auth: AuthActions, project_id, message, status):
+    token = auth.login()
+
+    response = client.delete(
+        f'/projects/{project_id}/delete',
         headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'})
 
     assert response.status_code == status
