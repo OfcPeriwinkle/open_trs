@@ -106,4 +106,23 @@ def update_project(user_id: int, project_id: int):
     db.commit()
 
     return jsonify({'message': f'Project {project_id} updated successfully',
-                   'project': project})
+                   'project': project}), 200
+
+
+@bp.route('/<int:project_id>/delete', methods=['DELETE'])
+@open_trs.auth.login_required
+def delete_project(user_id: int, project_id: int):
+    db = open_trs.db.get_db()
+    project = db.execute('SELECT * FROM Projects WHERE id = ?',
+                         (project_id,)).fetchone()
+
+    if project is None:
+        raise open_trs.InvalidUsage(f'Project {project_id} does not exist', 404)
+
+    if project['owner'] != user_id:
+        raise open_trs.InvalidUsage('Forbidden', 403)
+
+    db.execute('DELETE FROM Projects WHERE owner = ? AND id = ?', (user_id, project_id))
+    db.commit()
+
+    return jsonify({'message': f'Project {project_id} deleted successfully'}), 200
