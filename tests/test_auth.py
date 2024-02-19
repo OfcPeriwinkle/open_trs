@@ -3,7 +3,13 @@ import pytest
 from flask import Flask
 from flask.testing import FlaskClient
 
+import open_trs.configs
 import open_trs.db
+
+_TEST_TOKEN = jwt.encode({'iat': 0, 'exp': 0, 'sub': 1},
+                         open_trs.configs.TestingConfig.SECRET_KEY, algorithm='HS256')
+_TEST_INVALID_TOKEN = jwt.encode({'iat': 0, 'exp': 0, 'sub': 1},
+                                 'invalid_secret', algorithm='HS256')
 
 
 def test_register_new_user(client: FlaskClient, app: Flask):
@@ -80,6 +86,23 @@ def test_login_validate_input(client: FlaskClient, username, password, message):
         '/auth/login',
         headers={'Content-Type': 'application/json'},
         json={'username': username, 'password': password})
+
+    assert response.status_code == 400
+    assert message in response.data
+
+
+@pytest.mark.parametrize(('headers', 'message'), (
+    ({'Content-Type': 'application/json'}, b'Missing token'),
+    ({'Content-Type': 'application/json', 'Authorization': 'Bearer fake_token'},
+     b'Unable to decode token'),
+    ({'Content-Type': 'application/json', 'Authorization': f'Bearer {_TEST_TOKEN}'},
+     b'Expired token'),
+    ({'Content-Type': 'application/json', 'Authorization': f'Bearer {_TEST_INVALID_TOKEN}'},
+     b'Token signature verification failed')
+))
+def test_validate_login(client: FlaskClient, headers, message):
+    # Using an endpoint that requires authentication
+    response = client.post('/projects/create', headers=headers)
 
     assert response.status_code == 400
     assert message in response.data
