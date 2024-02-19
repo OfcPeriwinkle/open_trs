@@ -29,6 +29,14 @@ def get_projects(user_id: int):
 @bp.route('/<int:project_id>', methods=['GET'])
 @open_trs.auth.login_required
 def get_project(user_id: int, project_id: int):
+    """
+    Get a project by its ID.
+
+    Args:
+        user_id: The user's ID.
+        project_id: The project's ID.
+    """
+
     db = open_trs.db.get_db()
 
     project = db.execute(
@@ -46,6 +54,13 @@ def get_project(user_id: int, project_id: int):
 @bp.route('/create', methods=['POST'])
 @open_trs.auth.login_required
 def create_project(user_id: int):
+    """
+    Create a new project.
+
+    Args:
+        user_id: The user's ID.
+    """
+
     request_json = request.get_json()
     name = request_json.get('name')
     category = request_json.get('category')
@@ -75,6 +90,14 @@ def create_project(user_id: int):
 @bp.route('/<int:project_id>/update', methods=['PUT'])
 @open_trs.auth.login_required
 def update_project(user_id: int, project_id: int):
+    """
+    Update a project.
+
+    Args:
+        user_id: The user's ID.
+        project_id: The project's ID.
+    """
+
     request_json = request.get_json()
 
     db = open_trs.db.get_db()
@@ -112,6 +135,14 @@ def update_project(user_id: int, project_id: int):
 @bp.route('/<int:project_id>/delete', methods=['DELETE'])
 @open_trs.auth.login_required
 def delete_project(user_id: int, project_id: int):
+    """
+    Delete a project.
+
+    Args:
+        user_id: The user's ID.
+        project_id: The project's ID.
+    """
+
     db = open_trs.db.get_db()
     project = db.execute('SELECT * FROM Projects WHERE id = ?',
                          (project_id,)).fetchone()
