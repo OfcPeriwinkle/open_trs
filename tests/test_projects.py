@@ -1,4 +1,3 @@
-from wsgiref import headers
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
