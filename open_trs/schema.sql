@@ -25,7 +25,7 @@ CREATE TABLE Charges (
     project INTEGER NOT NULL,
     user INTEGER NOT NULL,
     hours INTEGER NOT NULL,
-    date_charged TIMESTAMP NOT NULL,
+    date_charged DATE NOT NULL,
     created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (project) REFERENCES Projects (id),
     FOREIGN KEY (user) REFERENCES Users (id)
