@@ -25,7 +25,8 @@ def test_create_project(client: FlaskClient, auth: AuthActions, app: Flask):
     assert success_message is not None
     assert 'created successfully' in success_message
 
-    # TODO: have the API return the created project
+    inserted_project = response.get_json().get('project')
+
     with app.app_context():
         db = open_trs.db.get_db()
         projects = db.execute(
@@ -36,6 +37,7 @@ def test_create_project(client: FlaskClient, auth: AuthActions, app: Flask):
 
         for key in new_project_info:
             assert projects[0][key] == new_project_info[key]
+            assert projects[0][key] == inserted_project[key]
 
 
 @pytest.mark.parametrize(('name', 'category', 'description', 'message'), (
