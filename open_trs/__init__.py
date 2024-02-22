@@ -6,6 +6,7 @@ import open_trs.auth
 import open_trs.configs
 import open_trs.db
 import open_trs.projects
+import open_trs.charges
 
 
 CONFIGS = {
@@ -99,6 +100,7 @@ def create_app(testing: bool = False):
     # Register API blueprints
     app.register_blueprint(open_trs.auth.bp)
     app.register_blueprint(open_trs.projects.bp)
+    app.register_blueprint(open_trs.charges.bp)
 
     # Register error handlers
     app.register_error_handler(InvalidUsage, handle_invalid_usage)
