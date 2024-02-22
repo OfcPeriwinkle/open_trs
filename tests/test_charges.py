@@ -8,6 +8,17 @@ import open_trs.db
 from tests.conftest import AuthActions
 
 
+def _compare_charges(charges, db_charges):
+    for db_charge, charge in zip(db_charges, charges):
+        for key in db_charge.keys():
+            if key == 'created':
+                continue
+            elif key == 'date_charged':
+                assert str(db_charge[key]) == charge[key]
+            else:
+                assert db_charge[key] == charge[key]
+
+
 def test_create_charges(client: FlaskClient, auth: AuthActions, app: Flask):
     token = auth.login()
     test_date = datetime(2024, 1, 1)
@@ -96,7 +107,7 @@ def test_get_charges(client: FlaskClient, auth: AuthActions, app: Flask):
             'ORDER BY date_charged, id',
             (1, '2024-02-01', '2024-02-28')).fetchall()
 
-        assert charges == [dict(charge) for charge in db_charges]
+        _compare_charges(charges, db_charges)
 
 
 def test_get_charges_missing(client: FlaskClient, auth: AuthActions):
@@ -118,7 +129,8 @@ def test_get_charges_all(client: FlaskClient, auth: AuthActions, app: Flask):
 
     response = client.get(
         '/charges/',
-        headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'})
+        headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'},
+        json={})
 
     assert response.status_code == 200
     charges = response.get_json().get('charges')
@@ -131,13 +143,15 @@ def test_get_charges_all(client: FlaskClient, auth: AuthActions, app: Flask):
             'SELECT * FROM Charges WHERE user = ? ORDER BY date_charged, id',
             (1,)).fetchall()
 
-        assert charges == [dict(charge) for charge in db_charges]
+        _compare_charges(charges, db_charges)
 
 
 @pytest.mark.parametrize('start, end, message, status', (
     (None, '2024-02-28', b'Start date required', 400),
     ('2024-02-01', None, b'End date required', 400),
     ('2024-03-01', '2024-02-28', b'End date must be after start date', 400),
+    ('not-a-date', '2024-02-28', b'Invalid date format, use YYYY-MM-DD', 400),
+    ('2024-02-01', 'not-a-date', b'Invalid date format, use YYYY-MM-DD', 400),
 ))
 def test_get_charges_validate_input(client: FlaskClient, auth: AuthActions, start, end, message,
                                     status):
