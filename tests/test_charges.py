@@ -111,3 +111,42 @@ def test_get_charges_missing(client: FlaskClient, auth: AuthActions):
     charges = response.get_json().get('charges')
 
     assert len(charges) == 0
+
+
+def test_get_charges_all(client: FlaskClient, auth: AuthActions, app: Flask):
+    token = auth.login()
+
+    response = client.get(
+        '/charges/',
+        headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'})
+
+    assert response.status_code == 200
+    charges = response.get_json().get('charges')
+
+    assert len(charges) == 3
+
+    with app.app_context():
+        db = open_trs.db.get_db()
+        db_charges = db.execute(
+            'SELECT * FROM Charges WHERE user = ? ORDER BY date_charged, id',
+            (1,)).fetchall()
+
+        assert charges == [dict(charge) for charge in db_charges]
+
+
+@pytest.mark.parametrize('start, end, message, status', (
+    (None, '2024-02-28', b'Start date required', 400),
+    ('2024-02-01', None, b'End date required', 400),
+    ('2024-03-01', '2024-02-28', b'End date must be after start date', 400),
+))
+def test_get_charges_validate_input(client: FlaskClient, auth: AuthActions, start, end, message,
+                                    status):
+    token = auth.login()
+
+    response = client.get(
+        '/charges/',
+        headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'},
+        json={'date_range': {'start': start, 'end': end}})
+
+    assert response.status_code == status
+    assert message in response.data
