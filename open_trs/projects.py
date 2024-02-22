@@ -84,7 +84,10 @@ def create_project(user_id: int):
         ' VALUES (?, ?, ?, ?)', (user_id, name, category, description))
     db.commit()
 
-    return jsonify({'message': 'Project created successfully'}), 201
+    project = db.execute('SELECT * FROM Projects WHERE name = ? AND owner = ?',
+                         (name, user_id)).fetchone()
+
+    return jsonify({'message': 'Project created successfully', 'project': dict(project)}), 201
 
 
 @bp.route('/<int:project_id>/update', methods=['PUT'])
