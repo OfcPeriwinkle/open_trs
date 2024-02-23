@@ -55,6 +55,18 @@ def test_create_charges(client: FlaskClient, auth: AuthActions, app: Flask):
             assert db_charge['user'] == inserted_charges[i]['user'] == 1
 
 
+def test_create_charges_empty(client: FlaskClient, auth: AuthActions):
+    token = auth.login()
+
+    response = client.post(
+        '/charges/create',
+        headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'},
+        json={'charges': []})
+
+    assert response.status_code == 400
+    assert b'No charges provided' in response.data
+
+
 @pytest.mark.parametrize('hours, project, date_charged, message, status', (
     (None, 1, datetime.date(2024, 1, 1), b'Hours required', 400),
     (1, None, datetime.date(2024, 1, 1), b'Project required', 400),
@@ -77,18 +89,6 @@ def test_create_charges_validate_input(client: FlaskClient, auth: AuthActions, a
 
     assert response.status_code == status
     assert message in response.data
-
-
-def test_create_charges_empty(client: FlaskClient, auth: AuthActions):
-    token = auth.login()
-
-    response = client.post(
-        '/charges/create',
-        headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'},
-        json={'charges': []})
-
-    assert response.status_code == 400
-    assert b'No charges provided' in response.data
 
 
 def test_get_charges(client: FlaskClient, auth: AuthActions, app: Flask):
@@ -194,6 +194,18 @@ def test_update_charges(auth: AuthActions, client: FlaskClient, app: Flask):
         for db_charge, updated_charge in zip(db_charges, updated_charges):
             assert db_charge['hours'] == updated_charge['hours']
             assert db_charge['id'] == updated_charge['id']
+
+
+def test_update_charges_empty(client: FlaskClient, auth: AuthActions):
+    token = auth.login()
+
+    response = client.put(
+        '/charges/update',
+        headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'},
+        json={'charges': []})
+
+    assert response.status_code == 400
+    assert b'No charges provided' in response.data
 
 
 @pytest.mark.parametrize('id, hours, message, status', (
