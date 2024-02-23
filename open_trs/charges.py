@@ -267,9 +267,10 @@ def delete_charges(user_id: int):
     db = open_trs.db.get_db()
 
     # Check that charges exist and are owned by the user
-    query = f'SELECT id, user FROM Charges WHERE id IN ({", ".join("?" * len(charge_ids))})'
     data = (*charge_ids,)
-    charges = db.execute(query, data).fetchall()
+    charges = db.execute(
+        f'SELECT id, user FROM Charges WHERE id IN ({", ".join("?" * len(charge_ids))})',
+        data).fetchall()
 
     if len(charges) != len(charge_ids):
         raise open_trs.InvalidUsage('Charge not found', 404)
