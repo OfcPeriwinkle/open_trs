@@ -3,7 +3,6 @@ import sqlite3
 from typing import List, Tuple
 
 from flask import Blueprint, jsonify, request
-from open_trs import projects
 
 import open_trs.db
 import open_trs.auth
@@ -174,10 +173,9 @@ def create_charges(user_id: int):
 
     inserted_charges = db.execute(
         'SELECT * FROM Charges'
-        ' WHERE (hours, project, date_charged, user) IN '
-        f'({",".join(["(?,?,?,?)"] * len(charge_data))})',
+        f' WHERE (hours, project, date_charged, user) IN ({",".join(["(?,?,?,?)"] * len(charge_data))})'
+        '  ORDER BY date_charged, id',
         tuple([element for data in charge_data for element in data])).fetchall()
-
     inserted_charges = [dict(charge) for charge in inserted_charges]
 
     for charge in inserted_charges:
@@ -185,3 +183,66 @@ def create_charges(user_id: int):
 
     return jsonify({'message': f'Successfully inserted {len(inserted_charges)} charges',
                     'charges': inserted_charges}), 201
+
+
+@bp.route('/update', methods=['PUT'])
+@open_trs.auth.login_required
+def update_charges(user_id: int):
+    """
+    Update charges.
+
+    Args:
+        user_id: The user's ID.
+
+    Returns:
+        A JSON response containing the updated charges.
+    """
+
+    request_json = request.get_json()
+    updated_charges = request_json.get('charges')
+
+    if not updated_charges:
+        raise open_trs.InvalidUsage('No charges provided', 400)
+
+    db = open_trs.db.get_db()
+
+    unique_charges = {}
+
+    for charge in updated_charges:
+        charge_id = charge.get('id')
+        hours = charge.get('hours')
+
+        if hours is None or not isinstance(hours, int):
+            raise open_trs.InvalidUsage('Hours required', 400)
+        elif hours <= 0:
+            raise open_trs.InvalidUsage('Hours must be greater than 0', 400)
+
+        unique_charges[charge_id] = hours
+
+    # Check that charges exist and are owned by the user
+    query = f'SELECT id, user FROM Charges WHERE id IN ({",".join("?" * len(unique_charges))})'
+    data = (*unique_charges.keys(),)
+    charges = db.execute(query, data).fetchall()
+
+    if len(charges) != len(unique_charges):
+        raise open_trs.InvalidUsage('Charge not found', 404)
+
+    for charge in charges:
+        if charge['user'] != user_id:
+            raise open_trs.InvalidUsage('Forbidden', 403)
+
+    charge_data = [(hours, user_id, charge_id) for charge_id, hours in unique_charges.items()]
+    db.executemany('UPDATE Charges SET hours = ? WHERE user = ? AND id= ?', charge_data)
+    db.commit()
+
+    updated_charges = db.execute(
+        f'SELECT * FROM Charges WHERE id IN ({", ".join("?" * len(unique_charges))})'
+        ' ORDER BY date_charged, id',
+        tuple(unique_charges.keys())).fetchall()
+    updated_charges = [dict(charge) for charge in updated_charges]
+
+    for charge in updated_charges:
+        charge['date_charged'] = str(charge['date_charged'])
+
+    return jsonify({'message': f'Successfully updated {len(updated_charges)} charges',
+                    'charges': updated_charges}), 200
