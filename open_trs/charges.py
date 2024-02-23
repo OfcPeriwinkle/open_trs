@@ -246,3 +246,39 @@ def update_charges(user_id: int):
 
     return jsonify({'message': f'Successfully updated {len(updated_charges)} charges',
                     'charges': updated_charges}), 200
+
+
+@bp.route('/delete', methods=['DELETE'])
+@open_trs.auth.login_required
+def delete_charges(user_id: int):
+    """
+    Delete charges.
+
+    Args:
+        user_id: The user's ID.
+    """
+
+    request_json = request.get_json()
+    charge_ids = request_json.get('ids')
+
+    if not charge_ids:
+        raise open_trs.InvalidUsage('No charges provided', 400)
+
+    db = open_trs.db.get_db()
+
+    # Check that charges exist and are owned by the user
+    query = f'SELECT id, user FROM Charges WHERE id IN ({", ".join("?" * len(charge_ids))})'
+    data = (*charge_ids,)
+    charges = db.execute(query, data).fetchall()
+
+    if len(charges) != len(charge_ids):
+        raise open_trs.InvalidUsage('Charge not found', 404)
+
+    for charge in charges:
+        if charge['user'] != user_id:
+            raise open_trs.InvalidUsage('Forbidden', 403)
+
+    db.execute(f'DELETE FROM Charges WHERE id IN ({", ".join("?" * len(charge_ids))})', data)
+    db.commit()
+
+    return jsonify({'message': f'Successfully deleted {len(charge_ids)} charges'}), 200
