@@ -194,9 +194,12 @@ def test_delete_project(client: FlaskClient, auth: AuthActions, app: Flask):
 
     with app.app_context():
         db = open_trs.db.get_db()
-        project = db.execute('SELECT * FROM Projects WHERE id = ?', (1,)).fetchone()
 
+        project = db.execute('SELECT * FROM Projects WHERE id = ?', (1,)).fetchone()
         assert project is None
+
+        charges = db.execute('SELECT * FROM Charges WHERE project = ?', (1,)).fetchall()
+        assert len(charges) == 0
 
 
 @pytest.mark.parametrize(('project_id', 'message', 'status'), (
