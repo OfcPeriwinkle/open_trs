@@ -224,3 +224,40 @@ def test_update_charges_validate_input(client: FlaskClient, auth: AuthActions, i
 
     assert response.status_code == status
     assert message in response.data
+
+
+def test_delete_charges(auth: AuthActions, client: FlaskClient, app: Flask):
+    token = auth.login()
+
+    response = client.delete(
+        '/charges/delete',
+        headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'},
+        json={'ids': [1, 2]})
+
+    assert response.status_code == 200
+
+    with app.app_context():
+        db = open_trs.db.get_db()
+        db_charges = db.execute(
+            'SELECT * FROM Charges WHERE user = ? AND id IN (?, ?)',
+            (1, 1, 2)).fetchall()
+
+        assert len(db_charges) == 0
+
+
+@pytest.mark.parametrize('ids, message, status', (
+    ([], b'No charge IDs provided', 400),
+    ([42], b'Charge not found', 404),
+    ([4], b'Forbidden', 403),
+))
+def test_delete_charges_validate_input(client: FlaskClient, auth: AuthActions, ids, message,
+                                       status):
+    token = auth.login()
+
+    response = client.delete(
+        '/charges/delete',
+        headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'},
+        json={'ids': ids})
+
+    assert response.status_code == status
+    assert message in response.data
