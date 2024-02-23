@@ -125,8 +125,9 @@ def update_project(user_id: int, project_id: int):
     if not updated:
         raise open_trs.InvalidUsage('Nothing to update', 400)
 
-    update_query = f'UPDATE Projects SET {" = ?, ".join(_UPDATABLE_FIELDS)} = ? WHERE owner = ? AND id = ?'
-    update_values = [project[field] for field in _UPDATABLE_FIELDS]
+    field_names = [field for field, _ in _UPDATABLE_FIELDS]
+    update_query = f'UPDATE Projects SET {" = ?, ".join(field_names)} = ? WHERE owner = ? AND id = ?'
+    update_values = [project[field] for field in field_names]
     update_values.extend([user_id, project_id])
 
     db.execute(update_query, update_values)
