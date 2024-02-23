@@ -246,7 +246,7 @@ def test_delete_charges(auth: AuthActions, client: FlaskClient, app: Flask):
 
 
 @pytest.mark.parametrize('ids, message, status', (
-    ([], b'No charge IDs provided', 400),
+    ([], b'No charges provided', 400),
     ([42], b'Charge not found', 404),
     ([4], b'Forbidden', 403),
 ))
