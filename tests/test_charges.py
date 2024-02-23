@@ -57,8 +57,8 @@ def test_create_charges(client: FlaskClient, auth: AuthActions, app: Flask):
 
 @pytest.mark.parametrize('hours, project, date_charged, message, status', (
     (None, 1, datetime.date(2024, 1, 1), b'Hours required', 400),
-    (1, None, datetime.date(2024, 1, 1), b'Project ID required', 400),
-    (1, 2, None, b'Date required', 400),
+    (1, None, datetime.date(2024, 1, 1), b'Project required', 400),
+    (1, 2, None, b'Invalid date format, use YYYY-MM-DD', 400),
     (0, 1, datetime.date(2024, 1, 1), b'Hours must be greater than 0', 400),
     (1, 42, datetime.date(2024, 1, 1), b'Project not found', 404),
     (1, 3, datetime.date(2024, 1, 1), b'Forbidden', 403),
