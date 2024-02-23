@@ -26,6 +26,7 @@ def _validate_and_filter_charges(charges: List[dict]) -> Tuple[set, set]:
     unique_charges = set()
     unique_projects = set()
 
+    # Validate charges and filter out duplicates
     for charge in charges:
         hours = charge.get('hours')
         project_id = charge.get('project')
@@ -37,8 +38,6 @@ def _validate_and_filter_charges(charges: List[dict]) -> Tuple[set, set]:
             raise open_trs.InvalidUsage('Hours must be greater than 0', 400)
         elif not project_id or not isinstance(project_id, int):
             raise open_trs.InvalidUsage('Project required', 400)
-        elif not date_charged:
-            raise open_trs.InvalidUsage('Date required', 400)
 
         try:
             date_charged = datetime.date.fromisoformat(date_charged)
@@ -47,6 +46,14 @@ def _validate_and_filter_charges(charges: List[dict]) -> Tuple[set, set]:
 
         unique_charges.add((hours, project_id, date_charged))
         unique_projects.add(project_id)
+
+    # Check that charges don't already exist
+    query = 'SELECT id FROM Charges WHERE (project, date_charged) IN ' \
+            f'({",".join(["(?,?)"] * len(unique_charges))})'
+    data = tuple([element for charge in unique_charges for element in charge[1:]])
+
+    if open_trs.db.get_db().execute(query, data).fetchone() is not None:
+        raise open_trs.InvalidUsage('Project already charged for this date', 400)
 
     return unique_charges, unique_projects
 
