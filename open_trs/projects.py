@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, request
 import open_trs.db
 import open_trs.auth
 
-_UPDATABLE_FIELDS = ['name', 'description', 'category']
+_UPDATABLE_FIELDS = [('name', str), ('description', str), ('category', int)]
 
 bp = Blueprint('projects', __name__, url_prefix='/projects')
 
@@ -116,8 +116,9 @@ def update_project(user_id: int, project_id: int):
     updated = False
     project = dict(project)
 
-    for field in _UPDATABLE_FIELDS:
-        if field in request_json and request_json[field]:
+    # TODO: When categories are implemented, make sure we are updating to a valid category
+    for field, type in _UPDATABLE_FIELDS:
+        if field in request_json and request_json[field] and isinstance(request_json[field], type):
             project[field] = request_json[field]
             updated = True
 
@@ -139,7 +140,7 @@ def update_project(user_id: int, project_id: int):
 @open_trs.auth.login_required
 def delete_project(user_id: int, project_id: int):
     """
-    Delete a project.
+    Delete a project and its associated charges.
 
     Args:
         user_id: The user's ID.
@@ -156,6 +157,7 @@ def delete_project(user_id: int, project_id: int):
     if project['owner'] != user_id:
         raise open_trs.InvalidUsage('Forbidden', 403)
 
+    db.execute('DELETE FROM Charges WHERE project = ? and user = ?', (project_id, user_id))
     db.execute('DELETE FROM Projects WHERE owner = ? AND id = ?', (user_id, project_id))
     db.commit()
 
