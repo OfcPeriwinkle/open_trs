@@ -72,6 +72,35 @@ The project is structured as follows:
 
 Once this project is a bit more mature, I'll build some docs for the API. Until then, please refer to the `tests/` directory to see example usage of the endpoints.
 
+The database schema can be found in `open_trs/schema.sql`.
+
+At a high level, Open TRS has three main "things":
+
+1. Users
+2. Projects
+3. Charges
+
+### Users
+
+Users are simple entities that have a username, email, and password. They should never be trusted and always break things.
+
+For Open TRS purposes, a user can create, view, update, and delete their own projects and charges.
+
+### Projects
+
+Projects are anything a user spends time doing. This is usually nothing worth noting.
+
+For our purposes, a project has a name and description. A project is owned by a single user.
+
+When a user decides to delete a project (i.e. they've finally realized that they've spent far too much time breaking open source code),
+all charges to that project are also deleted.
+
+### Charges
+
+Charges represent the time a user spends towards a project measured in hours. This is usually too much time.
+
+In Open TRS, a charge is created by a user for a project on a date.
+
 ## Contributing
 
 Contributions are welcome! Please make sure to write tests for any new features or changes in behavior.
