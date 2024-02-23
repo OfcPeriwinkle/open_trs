@@ -168,3 +168,48 @@ def test_get_charges_validate_input(client: FlaskClient, auth: AuthActions, star
 
     assert response.status_code == status
     assert message in response.data
+
+
+def test_update_charges(auth: AuthActions, client: FlaskClient, app: Flask):
+    token = auth.login()
+    charge_updates = [{'id': 1, 'hours': 3},
+                      {'id': 2, 'hours': 4}]
+
+    response = client.put(
+        '/charges/update',
+        headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'},
+        json={'charges': charge_updates})
+
+    assert response.status_code == 200
+    updated_charges = response.get_json().get('charges')
+
+    with app.app_context():
+        db = open_trs.db.get_db()
+        db_charges = db.execute(
+            'SELECT * FROM Charges WHERE user = ? ORDER BY date_charged, id',
+            (1,)).fetchall()
+
+        assert len(db_charges) == 2
+
+        for db_charge, updated_charge in zip(db_charges, updated_charges):
+            assert db_charge['hours'] == updated_charge['hours']
+            assert db_charge['id'] == updated_charge['id']
+
+
+@pytest.mark.parametrize('id, hours, message, status', (
+    (1, None, b'Hours required', 400),
+    (1, -1, b'Hours must be greater than 0', 400),
+    (42, 1, b'Charge not found', 404),
+    (3, 1, b'Forbidden', 403),
+))
+def test_update_charges_validate_input(client: FlaskClient, auth: AuthActions, id, hours,
+                                       message, status):
+    token = auth.login()
+
+    response = client.put(
+        '/charges/update',
+        headers={'Content-Type': 'application/json', 'Authorization': f'Bearer {token}'},
+        json={'charges': [{'id': id, 'hours': hours}]})
+
+    assert response.status_code == status
+    assert message in response.data
