@@ -32,6 +32,14 @@ If you are planning on modifying Open TRS, use an in-place installation instead:
 pip install -e .
 ```
 
+## Running the Server
+
+To run Open TRS, use:
+
+```sh
+flask --app open_trs run --debug
+```
+
 ## Running Tests
 
 Open TRS uses `pytest` and `coverage` to run tests and produce coverage reports. Make sure these packages are installed in the current Python environment with:
