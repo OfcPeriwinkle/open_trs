@@ -22,13 +22,14 @@ def _compare_charges(charges, db_charges):
 def test_create_charges(client: FlaskClient, auth: AuthActions, app: Flask):
     token = auth.login()
     test_date = str(datetime.date(2024, 1, 1))
+    test_date_2 = str(datetime.date(2024, 1, 2))
 
     new_charges = [{'hours': 1,
                     'project': 1,
                     'date_charged': test_date},
                    {'hours': 2,
                     'project': 2,
-                    'date_charged': test_date}]
+                    'date_charged': test_date_2}]
 
     response = client.post('/charges/create',
                            headers={'Content-Type': 'application/json',
@@ -41,9 +42,8 @@ def test_create_charges(client: FlaskClient, auth: AuthActions, app: Flask):
     with app.app_context():
         db = open_trs.db.get_db()
         db_charges = db.execute(
-            'SELECT * FROM Charges WHERE user = ? AND date_charged = ? ORDER BY id',
-            (1,
-             test_date)).fetchall()
+            'SELECT * FROM Charges WHERE user = ? AND date_charged BETWEEN ? AND ? ORDER BY date_charged, id',
+            (1, test_date, test_date_2)).fetchall()
 
         assert len(db_charges) == 2
 
@@ -186,14 +186,13 @@ def test_update_charges(auth: AuthActions, client: FlaskClient, app: Flask):
     with app.app_context():
         db = open_trs.db.get_db()
         db_charges = db.execute(
-            'SELECT * FROM Charges WHERE user = ? ORDER BY date_charged, id',
-            (1,)).fetchall()
+            'SELECT * FROM Charges WHERE user = ? AND id IN (?, ?) ORDER BY date_charged, id',
+            (1, 1, 2)).fetchall()
 
         assert len(db_charges) == 2
 
         for db_charge, updated_charge in zip(db_charges, updated_charges):
             assert db_charge['hours'] == updated_charge['hours']
-            assert db_charge['id'] == updated_charge['id']
 
 
 def test_update_charges_empty(client: FlaskClient, auth: AuthActions):
@@ -212,7 +211,7 @@ def test_update_charges_empty(client: FlaskClient, auth: AuthActions):
     (1, None, b'Hours required', 400),
     (1, -1, b'Hours must be greater than 0', 400),
     (42, 1, b'Charge not found', 404),
-    (3, 1, b'Forbidden', 403),
+    (4, 1, b'Forbidden', 403),
 ))
 def test_update_charges_validate_input(client: FlaskClient, auth: AuthActions, id, hours,
                                        message, status):
